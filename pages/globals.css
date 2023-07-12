@@ -14,4 +14,19 @@ html, body {
   height: 100%;
   padding: 0;
   margin: 0;
+  background-color: white;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #1f2937; /* 暗色主题下的背景颜色 */
+  }
+}
+
+body>div {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

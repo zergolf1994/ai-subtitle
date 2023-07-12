@@ -12,9 +12,11 @@ export default function Uploader({
   onFinished
 }: IUploaderProps) {
   const [data, setData] = useState<{
-    subtitleFile: string | null
+    filename: string | null,
+    size: number | null
   }>({
-    subtitleFile: null,
+    filename: null,
+    size: null
   })
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -27,15 +29,12 @@ export default function Uploader({
     (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.currentTarget.files && event.currentTarget.files[0];
       if (file) {
-        if (file.size / 1024 / 1024 > 10) {
+        const fileMb = file.size / 1024 / 1024; // in MB
+        if (fileMb > 10) {
           toast.error('File size too big (max 10MB)')
         } else {
           setFile(file)
-          const reader = new FileReader()
-          reader.onload = (e) => {
-            setData((prev) => ({ ...prev, subtitleFile: e.target?.result as string }))
-          }
-          reader.readAsDataURL(file)
+          setData({ filename: file.name, size: fileMb })
         }
       }
     },
@@ -43,8 +42,8 @@ export default function Uploader({
   )
 
   const saveDisabled = useMemo(() => {
-    return !data.subtitleFile || saving
-  }, [data.subtitleFile, saving])
+    return !data.filename || saving
+  }, [data.filename, saving])
 
   const uploadFileHandler = async (file: any) => {
     const pictureData = new FormData();
@@ -104,29 +103,39 @@ export default function Uploader({
 
             const file = e.dataTransfer.files && e.dataTransfer.files[0]
             if (file) {
-              if (file.size / 1024 / 1024 > 10) {
+              const fileMb = file.size / 1024 / 1024; // in MB
+              if (fileMb > 10) {
                 toast.error('File size too big (max 10MB)')
               } else {
                 setFile(file)
-                const reader = new FileReader()
-                reader.onload = (e) => {
-                  setData((prev) => ({
-                    ...prev,
-                    subtitleFile: e.target?.result as string,
-                  }))
-                }
-                reader.readAsDataURL(file)
+                setData({ filename: file.name, size: fileMb })
               }
             }
           }}
         >
-          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-            <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-            </svg>
-            <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">.srt or .vtt (MAX. 10MB)</p>
-          </div>
+          {
+            data.filename ? (
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <svg className="w-8 h-8 text-gray-500 dark:text-gray-400 mb-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 20">
+                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 1v4a1 1 0 0 1-1 1H1m4 6 2 2 4-4m4-8v16a.97.97 0 0 1-.933 1H1.933A.97.97 0 0 1 1 18V5.828a2 2 0 0 1 .586-1.414l2.828-2.828A2 2 0 0 1 5.828 1h8.239A.97.97 0 0 1 15 2Z"/>
+                </svg>
+                <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span className="font-semibold">{ data.filename }</span>
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                 Size { data.size }MB
+                </p>
+              </div>  
+            ) : (
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                </svg>
+                <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">.srt or .vtt (MAX. 10MB)</p>
+              </div>  
+            )
+          }
           <input
             id="dropzone-file"
             type="file"

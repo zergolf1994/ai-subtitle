@@ -1,24 +1,31 @@
-// @ts-nocheck
-
 'use client'
+import { useState, useCallback, useMemo, ChangeEvent } from 'react';
+import toast from 'react-hot-toast';
+import { IUploadResponseData } from '@/pages/types';
 
-import { useState, useCallback, useMemo, ChangeEvent } from 'react'
-import toast from 'react-hot-toast'
-import LoadingDots from './loading-dots'
+const FILE_ACCEPT = '.srt,.vtt';
+interface IUploaderProps {
+  onFinished: (subtitle: IUploadResponseData | null) => void;
+}
 
-export default function Uploader() {
+export default function Uploader({
+  onFinished
+}: IUploaderProps) {
   const [data, setData] = useState<{
     subtitleFile: string | null
   }>({
     subtitleFile: null,
   })
-  const [file, setFile] = useState<File | null>(null)
+  const [file, setFile] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const [dragActive, setDragActive] = useState(false)
-
-  const onChangePicture = useCallback(
+  /**
+   * Handle file change
+   */
+  const onChangeFile = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.currentTarget.files && event.currentTarget.files[0]
+      const file = event.currentTarget.files && event.currentTarget.files[0];
       if (file) {
         if (file.size / 1024 / 1024 > 10) {
           toast.error('File size too big (max 10MB)')
@@ -35,13 +42,11 @@ export default function Uploader() {
     [setData]
   )
 
-  const [saving, setSaving] = useState(false)
-
   const saveDisabled = useMemo(() => {
     return !data.subtitleFile || saving
   }, [data.subtitleFile, saving])
 
-  const uploadPictureHandler = async (file: any) => {
+  const uploadFileHandler = async (file: any) => {
     const pictureData = new FormData();
     pictureData.append('subtitleFile', file);
     try {
@@ -51,50 +56,9 @@ export default function Uploader() {
       });
 
       if (res.status === 200) {
-        const { url } = (await res.json())
-        toast(
-          (t) => (
-            <div className="relative">
-              <div className="p-2">
-                <p className="font-semibold text-gray-900">
-                  File uploaded!
-                </p>
-                <p className="mt-1 text-sm text-gray-500">
-                  Your file has been uploaded to{' '}
-                  <a
-                    className="font-medium text-gray-900 underline"
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {url}
-                  </a>
-                </p>
-              </div>
-              <button
-                onClick={() => toast.dismiss(t.id)}
-                className="absolute top-0 -right-2 inline-flex text-gray-400 focus:outline-none focus:text-gray-500 rounded-full p-1.5 hover:bg-gray-100 transition ease-in-out duration-150"
-              >
-                <svg
-                  className="h-5 w-5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 5.293a1 1 0 011.414 0L10
-                        8.586l3.293-3.293a1 1 0 111.414 1.414L11.414
-                        10l3.293 3.293a1 1 0 01-1.414 1.414L10
-                        11.414l-3.293 3.293a1 1 0 01-1.414-1.414L8.586
-                        10 5.293 6.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            </div>
-          ),
-          { duration: 300000 }
-        )
+        const { data }: { data: IUploadResponseData } = (await res.json());
+        console.log('[uploader] "/api/upload" response: ', data);
+        onFinished(data);
       } else {
         const error = await res.text()
         toast.error(error)
@@ -111,124 +75,82 @@ export default function Uploader() {
       onSubmit={async (e) => {
         e.preventDefault()
         setSaving(true)
-        uploadPictureHandler(file);
+        uploadFileHandler(file);
       }}
     >
-      <div>
-        <div className="space-y-1 mb-4">
-          <h2 className="text-xl font-semibold">Upload a subtitle file</h2>
-          <p className="text-sm text-gray-500">
-            Accepted formats: .srt,.vtt
-          </p>
-        </div>
+      <div className="flex items-center justify-center w-full">
         <label
-          htmlFor="subtitle-file-upload"
-          className="group relative mt-2 flex h-72 cursor-pointer flex-col items-center justify-center rounded-md border border-gray-300 bg-white shadow-sm transition-all hover:bg-gray-50"
-        >
-          <div
-            className="absolute z-[5] h-full w-full rounded-md"
-            onDragOver={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setDragActive(true)
-            }}
-            onDragEnter={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setDragActive(true)
-            }}
-            onDragLeave={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setDragActive(false)
-            }}
-            onDrop={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setDragActive(false)
+          htmlFor="dropzone-file"
+          className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+          onDragOver={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setDragActive(true)
+          }}
+          onDragEnter={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setDragActive(true)
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setDragActive(false)
+          }}
+          onDrop={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setDragActive(false)
 
-              const file = e.dataTransfer.files && e.dataTransfer.files[0]
-              if (file) {
-                if (file.size / 1024 / 1024 > 50) {
-                  toast.error('File size too big (max 50MB)')
-                } else {
-                  setFile(file)
-                  const reader = new FileReader()
-                  reader.onload = (e) => {
-                    setData((prev) => ({
-                      ...prev,
-                      subtitleFile: e.target?.result as string,
-                    }))
-                  }
-                  reader.readAsDataURL(file)
+            const file = e.dataTransfer.files && e.dataTransfer.files[0]
+            if (file) {
+              if (file.size / 1024 / 1024 > 10) {
+                toast.error('File size too big (max 10MB)')
+              } else {
+                setFile(file)
+                const reader = new FileReader()
+                reader.onload = (e) => {
+                  setData((prev) => ({
+                    ...prev,
+                    subtitleFile: e.target?.result as string,
+                  }))
                 }
+                reader.readAsDataURL(file)
               }
-            }}
-          />
-          <div
-            className={`${dragActive ? 'border-2 border-black' : ''
-              } absolute z-[3] flex h-full w-full flex-col items-center justify-center rounded-md px-10 transition-all ${data.subtitleFile
-                ? 'bg-white/80 opacity-0 hover:opacity-100 hover:backdrop-blur-md'
-                : 'bg-white opacity-100 hover:bg-gray-50'
-              }`}
-          >
-            <svg
-              className={`${dragActive ? 'scale-110' : 'scale-100'
-                } h-7 w-7 text-gray-500 transition-all duration-75 group-hover:scale-110 group-active:scale-95`}
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
-              <path d="M12 12v9"></path>
-              <path d="m16 16-4-4-4 4"></path>
+            }
+          }}
+        >
+          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+            <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
             </svg>
-            <p className="mt-2 text-center text-sm text-gray-500">
-              Drag and drop or click to upload.
-            </p>
-            <p className="mt-2 text-center text-sm text-gray-500">
-              Max file size: 10MB
-            </p>
-            <span className="sr-only">File upload</span>
+            <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">.srt or .vtt (MAX. 10MB)</p>
           </div>
-          {/* {data.subtitleFile && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={data.subtitleFile}
-              alt="Preview"
-              className="h-full w-full rounded-md object-cover"
-            />
-          )} */}
-        </label>
-        <div className="mt-1 flex rounded-md shadow-sm">
           <input
-            id="subtitle-file-upload"
-            name="subtitleFile"
+            id="dropzone-file"
             type="file"
-            accept=".srt,.vtt"
-            className="sr-only"
-            onChange={onChangePicture}
+            className="hidden"
+            name="subtitleFile"
+            accept={FILE_ACCEPT}
+            onChange={onChangeFile}
           />
-        </div>
+        </label>
       </div>
-
       <button
         disabled={saveDisabled}
-        className={`${saveDisabled
-            ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
-            : 'border-black bg-black text-white hover:bg-white hover:text-black'
-          } flex h-10 w-full items-center justify-center rounded-md border text-sm transition-all focus:outline-none`}
-      >
-        {saving ? (
-          <LoadingDots color="#808080" />
-        ) : (
-          <p className="text-sm">Confirm upload</p>
+        type="submit"
+        className={`w-full text-white font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 inline-flex items-center justify-center ${saveDisabled ? 'cursor-not-allowed bg-blue-400 dark:bg-blue-400' : 'bg-blue-700 dark:bg-blue-600 hover:bg-blue-800 dark:hover:bg-blue-700 dark:focus:ring-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 '}`}>
+          {saving ? (
+            <span>
+              <svg aria-hidden="true" role="status" className="inline w-4 h-4 mr-3 text-white animate-spin" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="#E5E7EB"/>
+              <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentColor"/>
+              </svg>
+              Loading...
+            </span>
+          ) : (
+          <span>Confirm upload</span>
         )}
       </button>
     </form>

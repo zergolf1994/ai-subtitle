@@ -17,6 +17,8 @@
     "colors": "^1.4.0",
     "eslint": "8.44.0",
     "eslint-config-next": "13.4.9",
+    "flowbite": "^1.7.0",
+    "flowbite-react": "^0.4.11",
     "formidable": "^3.5.0",
     "next": "13.4.9",
     "openai": "^3.3.0",

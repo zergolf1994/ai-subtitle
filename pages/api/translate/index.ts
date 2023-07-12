@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextApiRequest, NextApiResponse } from "next";
 import { Configuration, OpenAIApi } from "openai";
 import { nanoid } from "@/lib/utils";

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useCallback, useMemo, ChangeEvent } from 'react';
 import toast from 'react-hot-toast';
-import { IUploadResponseData } from '@/pages/types';
+import { IUploadResponseData } from '@/lib/types';
 
 const FILE_ACCEPT = '.srt,.vtt';
 interface IUploaderProps {

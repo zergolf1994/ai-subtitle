@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm, Fields, File } from "formidable";
 import { promises as fs } from "fs";
 import { parseSync } from "subtitle";
-import { IUploadResponseData } from "@/pages/types";
+import { IUploadResponseData } from "@/lib/types";
 
 // first we need to disable the default body parser
 export const config = {

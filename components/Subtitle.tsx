@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Cue } from "subtitle";
-import { IUploadResponseData } from '@/pages/types';
+import { IUploadResponseData } from '@/lib/types';
 
 interface ISubtitleProps {
   data: IUploadResponseData;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Uploader from '@/components/uploader';
-import { IUploadResponseData } from '@/pages/types';
+import { IUploadResponseData } from '@/lib/types';
 import Subtitle from '@/components/Subtitle';
 
 const Steps = {

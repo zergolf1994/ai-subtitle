@@ -17,7 +17,7 @@ export default function Home() {
     switch (step) {
       case Steps.UPLOAD:
         return (
-          <div className='sm:p-12 md:24'>
+          <div className='sm:p-0'>
             <Uploader
               onFinished={(data) => {
                 setStep(Steps.TRANSLATE);
@@ -28,7 +28,7 @@ export default function Home() {
         )
       case Steps.TRANSLATE:
         return (
-          <div className='p-12'>
+          <div className='p-0'>
             {data && <Subtitle data={data} handleBack={() => setStep(Steps.UPLOAD)}/>}
           </div>
         )
@@ -50,7 +50,7 @@ export default function Home() {
   return (
     <div>
       <div>
-        <ol className="max-sm:mb-4 flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 dark:text-gray-400 sm:text-base">
+        <ol className="max-sm:mb-4 px-4 pt-0 pb-8 flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 dark:text-gray-400 sm:text-base">
           <li className={`${isStepActive(Steps.UPLOAD)} flex md:w-full items-center sm:after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-200 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10 dark:after:border-gray-700`}>
             <span className="flex items-center after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-200 dark:after:text-gray-500">
               <span className="mr-2">1.</span>

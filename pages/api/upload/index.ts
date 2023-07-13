@@ -1,8 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm, Fields, File } from "formidable";
 import { promises as fs } from "fs";
-import { parseSync } from "subtitle";
+import { NodeCue, parseSync } from "subtitle";
 import { IUploadResponseData } from "@/lib/types";
+import { nanoid } from "@/lib/utils";
 
 // first we need to disable the default body parser
 export const config = {
@@ -38,8 +39,8 @@ const uploadHandler = async (req: NextApiRequest, res: NextApiResponse) => {
       const { filepath, originalFilename } = uploadFile;
       const fileContent = await fs.readFile(filepath, "utf-8");
       // NOTE: for better performance, consider using streams
-      let subtitleNodes = parseSync(fileContent);
-      console.log("[upload handler] subtitle length:", subtitleNodes.length);
+      let nodeList = parseSync(fileContent);
+      console.log("[upload handler] subtitle length:", nodeList.length);
 
       // response data
       let data: IUploadResponseData = {
@@ -47,14 +48,25 @@ const uploadHandler = async (req: NextApiRequest, res: NextApiResponse) => {
         length: 0,
         filename: originalFilename,
       };
-      if (subtitleNodes && subtitleNodes.length > 0) {
+      if (nodeList && nodeList.length > 0) {
         // filter out non-cue lines
-        subtitleNodes = subtitleNodes.filter((line) => line.type === "cue");
-        data.nodes = subtitleNodes;
+        const subtitleNodes = nodeList.filter((line) => line.type === "cue") as NodeCue[];
+        data.nodes = subtitleNodes.map((node, nodeIndex) => {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              key: nanoid(),
+              index: nodeIndex,
+              originalText: node.data.text, 
+              targetText: undefined
+            }
+          }
+        });
         data.length = subtitleNodes.length;
       }
       console.log("[upload handler] data:", data);
-      res.status(200).json({ message: "uploaded successful!", data });
+      res.status(200).json({ data });
     } catch (error) {
       // @ts-ignore
       res.status(500).json({ message: error.message });

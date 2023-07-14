@@ -2,7 +2,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { Configuration, OpenAIApi } from "openai";
 import { nanoid } from "@/lib/utils";
-import { SubtitleNodeData } from "@/lib/types";
+import { SubtitleLine, TranslationStatus } from "@/lib/types";
 
 // export const runtime = "edge";
 // first we need to disable the default body parser
@@ -20,7 +20,7 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const json: SubtitleNodeData = JSON.parse(req.body);
+  const json: SubtitleLine = JSON.parse(req.body);
   console.log('json: %o', json);
   const { text } = json;
 
@@ -50,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     result = JSON.parse(result);
     previousSubtitles.push({ role: "user", content: JSON.stringify(result.Input) })
     previousSubtitles.push({ role: 'assistant', content: JSON.stringify({ Input: result.Input }) })
-    res.status(200).json({ targetText: result.Translation, ...json });
+    res.status(200).json({ targetText: result.Translation, ...json, status: TranslationStatus.Translated });
   } catch (e) {
     console.log("###");
     console.log(e.toString());

@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { IncomingForm, Fields, File } from "formidable";
 import { promises as fs } from "fs";
 import { NodeCue, parseSync } from "subtitle";
-import { IUploadResponseData } from "@/lib/types";
+import { SubtitleMainInfo } from "@/lib/types";
 import { nanoid } from "@/lib/utils";
 
 // first we need to disable the default body parser
@@ -16,7 +16,7 @@ export const config = {
  * upload file handler
  * @param req {NextApiRequest}
  * @param res {NextApiResponse}
- * @returns {IUploadResponseData}
+ * @returns {SubtitleMainInfo}
  */
 const uploadHandler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === "POST") {
@@ -39,31 +39,28 @@ const uploadHandler = async (req: NextApiRequest, res: NextApiResponse) => {
       const { filepath, originalFilename } = uploadFile;
       const fileContent = await fs.readFile(filepath, "utf-8");
       // NOTE: for better performance, consider using streams
-      let nodeList = parseSync(fileContent);
-      console.log("[upload handler] subtitle length:", nodeList.length);
+      let lines = parseSync(fileContent);
+      console.log("[upload handler] subtitle length:", lines.length);
 
       // response data
-      let data: IUploadResponseData = {
-        nodes: [],
+      let data: SubtitleMainInfo = {
+        lines: [],
         length: 0,
         filename: originalFilename,
       };
-      if (nodeList && nodeList.length > 0) {
+      if (lines && lines.length > 0) {
         // filter out non-cue lines
-        const subtitleNodes = nodeList.filter((line) => line.type === "cue") as NodeCue[];
-        data.nodes = subtitleNodes.map((node, nodeIndex) => {
+        const subtitleLines = lines.filter((line) => line.type === "cue" ? line.data : null) as NodeCue[];
+        data.lines = subtitleLines.map((line, index) => {
           return {
-            ...node,
-            data: {
-              ...node.data,
-              key: nanoid(),
-              index: nodeIndex,
-              originalText: node.data.text, 
-              targetText: undefined
-            }
+            ...line.data,
+            key: nanoid(),
+            index,
+            originalText: line.data.text, 
+            targetText: undefined
           }
         });
-        data.length = subtitleNodes.length;
+        data.length = subtitleLines.length;
       }
       console.log("[upload handler] data:", data);
       res.status(200).json({ data });
